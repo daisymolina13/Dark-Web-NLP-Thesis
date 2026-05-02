@@ -1,0 +1,10 @@
+Thesis Datasets
+
+import kagglehub
+
+# Download latest version
+path = kagglehub.dataset_download("mhwong2007/drug-listing-dataset")
+
+print("Path to dataset files:", path)
+
+
