@@ -31,9 +31,9 @@ This project applies Natural Language Processing (NLP) techniques to analyze com
 - Neuroticism remained consistently low across all platforms
 
 ## Results
-![Personality by Cluster]()
-![Personality Drift]()
-![Listings per Source]()
+![Personality by Cluster](personality_by_cluster.png)
+![Personality Drift](personality_drift.png)
+![Listings per Source](listings_per_source.png)
 
 ## Tools & Libraries
 - Python 3
