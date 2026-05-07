@@ -7,7 +7,7 @@ from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# --- Load Dataset ---
+# Load Dataset
 df = pd.read_csv("drug_listings.csv")
 
 # --- Quick Check ---
@@ -18,10 +18,10 @@ print(df.head(3))
 
 # Step 2: Preprocessing
 
-# --- Load spaCy model ---
+# Load spaCy model 
 nlp = spacy.load("en_core_web_sm")
 
-# --- Clean text function ---
+# Clean text function 
 def clean_text(text):
     if not isinstance(text, str):
         return ""
@@ -35,22 +35,22 @@ def clean_text(text):
     text = text.strip()
     return text
 
-# --- Lemmatize function ---
+# Lemmatize function 
 def lemmatize(text):
     doc = nlp(text)
     return " ".join([token.lemma_ for token in doc 
                      if not token.is_stop and not token.is_punct and len(token) > 2])
 
-# --- Apply cleaning ---
+# Apply cleaning 
 print("Cleaning text... this may take a few minutes")
 df['cleaned'] = df['product_description'].apply(clean_text)
 
-# --- Apply lemmatization (on a sample first to test) ---
+#  Apply lemmatization (on a sample first to test) 
 print("Lemmatizing sample...")
 sample_df = df.head(500).copy()
 sample_df['lemmatized'] = sample_df['cleaned'].apply(lemmatize)
 
-# --- Check results ---
+# Check results 
 print("\nSample of cleaned vs lemmatized:")
 print(sample_df[['product_description', 'cleaned', 'lemmatized']].head(3))
 print("\nPreprocessing complete!")
@@ -59,7 +59,7 @@ print("\nPreprocessing complete!")
 
 print("Running TF-IDF...")
 
-# --- Initialize TF-IDF ---
+# Initialize TF-IDF 
 tfidf = TfidfVectorizer(
     max_features=1000,    # top 1000 most important words
     min_df=5,             # word must appear in at least 5 listings
@@ -67,10 +67,10 @@ tfidf = TfidfVectorizer(
     ngram_range=(1, 2)    # capture single words AND two-word phrases
 )
 
-# --- Fit on lemmatized sample ---
+# Fit on lemmatized sample 
 tfidf_matrix = tfidf.fit_transform(sample_df['lemmatized'])
 
-# --- Check results ---
+#  Check results 
 print("TF-IDF matrix shape:", tfidf_matrix.shape)
 print("\nTop 20 most important terms:")
 feature_names = tfidf.get_feature_names_out()
@@ -78,13 +78,11 @@ print(list(feature_names[:20]))
 
 print("\nTF-IDF complete!")
 
-# ============================================================
 # Step 4: K-Means Clustering
-# ============================================================
 
 print("Running clustering...")
 
-# --- Find optimal number of clusters ---
+# Find optimal number of clusters 
 inertia = []
 k_range = range(2, 11)
 
@@ -93,7 +91,7 @@ for k in k_range:
     km.fit(tfidf_matrix)
     inertia.append(km.inertia_)
 
-# --- Plot elbow curve to find best k ---
+#  Plot elbow curve to find best k 
 plt.figure(figsize=(8, 4))
 plt.plot(k_range, inertia, marker='o')
 plt.title('Elbow Method - Finding Optimal Clusters')
@@ -104,15 +102,15 @@ plt.tight_layout()
 plt.savefig('elbow_curve.png')
 print("Elbow curve saved as elbow_curve.png")
 
-# --- Apply KMeans with k=5 (we'll adjust after seeing elbow curve) ---
+# Apply KMeans with k=5 (we'll adjust after seeing elbow curve)
 km_model = KMeans(n_clusters=5, random_state=42, n_init=10)
 sample_df['cluster'] = km_model.fit_predict(tfidf_matrix)
 
-# --- Check cluster distribution ---
+# Check cluster distribution 
 print("\nCluster distribution:")
 print(sample_df['cluster'].value_counts().sort_index())
 
-# --- Top terms per cluster ---
+# Top terms per cluster 
 print("\nTop 10 terms per cluster:")
 order_centroids = km_model.cluster_centers_.argsort()[:, ::-1]
 for i in range(5):
@@ -126,7 +124,7 @@ print("\nClustering complete!")
 print("Running personality profiling...")
 
 # --- Word lists based on Big Five markers ---
-# These are simplified lexicon-based proxies for each trait
+# Simplified lexicon-based proxies for each trait
 personality_lexicon = {
     'openness': ['unique', 'original', 'creative', 'special', 'exotic', 
                  'rare', 'experience', 'variety', 'different', 'new'],
@@ -141,7 +139,7 @@ personality_lexicon = {
                     'worry', 'concern', 'caution', 'fear', 'avoid']
 }
 
-# --- Score each listing ---
+# Score each listing 
 def score_personality(text):
     if not isinstance(text, str):
         return pd.Series([0, 0, 0, 0, 0])
@@ -151,17 +149,17 @@ def score_personality(text):
         scores[trait] = sum(1 for w in words if w in lexicon)
     return pd.Series(scores)
 
-# --- Apply to sample ---
+# Apply to sample 
 personality_scores = sample_df['lemmatized'].apply(score_personality)
 sample_df = pd.concat([sample_df, personality_scores], axis=1)
 
-# --- Average scores by cluster ---
+# Average scores by cluster 
 print("\nAverage personality scores by cluster:")
 trait_cols = list(personality_lexicon.keys())
 cluster_personality = sample_df.groupby('cluster')[trait_cols].mean().round(3)
 print(cluster_personality)
 
-# --- Visualize ---
+# Visualize 
 plt.figure(figsize=(10, 6))
 cluster_personality.T.plot(kind='bar', figsize=(12, 6))
 plt.title('Big Five Personality Traits by Cluster')
@@ -177,15 +175,15 @@ print("Personality profiling complete!")
 
 print("Running longitudinal analysis...")
 
-# --- Use 'source' as platform proxy for time ---
+# Use 'source' as platform proxy for time 
 print("\nUnique sources (platforms):")
 print(df['source'].value_counts())
 
-# --- Apply cleaning to full dataset by source ---
+# Apply cleaning to full dataset by source 
 print("\nCleaning full dataset by source (this may take a few minutes)...")
 df['cleaned'] = df['product_description'].apply(clean_text)
 
-# --- Group by source and get top TF-IDF terms per platform ---
+# Group by source and get top TF-IDF terms per platform
 sources = df['source'].unique()
 
 platform_terms = {}
@@ -205,7 +203,7 @@ print("\nTop 15 terms per platform/source:")
 for source, terms in platform_terms.items():
     print(f"\nSource {source}: {terms}")
 
-# --- Plot listing counts per source ---
+# Plot listing counts per source 
 plt.figure(figsize=(10, 5))
 df['source'].value_counts().plot(kind='bar', color='steelblue')
 plt.title('Number of Listings per Platform Source')
@@ -215,7 +213,7 @@ plt.tight_layout()
 plt.savefig('listings_per_source.png')
 print("\nListings per source chart saved as listings_per_source.png")
 
-# --- Personality scores across sources ---
+# Personality scores across sources
 print("\nCalculating personality drift across sources...")
 samples = []
 for source in df['source'].unique():
@@ -232,7 +230,7 @@ source_personality = df_sample_full.groupby('source')[trait_cols].mean().round(3
 print("\nPersonality scores by source:")
 print(source_personality)
 
-# --- Plot personality drift ---
+# Plot personality drift 
 source_personality.plot(kind='bar', figsize=(12, 6))
 plt.title('Personality Trait Drift Across Platform Sources')
 plt.xlabel('Source')
